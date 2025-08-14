@@ -4,6 +4,7 @@ export interface ChatMessage {
   content: string;
   role: 'user' | 'assistant';
   timestamp: Date;
+  replyToId?: string;
 }
 
 export interface ChatRequest {
@@ -34,28 +35,34 @@ const getModelConfig = (modelId: string) => {
       maxTokens: 128000,
       temperature: 0.7
     },
-    'gpt-4-turbo': {
-      provider: 'openai',
-      model: 'gpt-4-turbo-preview',
-      maxTokens: 128000,
-      temperature: 0.7
-    },
-    'claude-3-5-sonnet': {
-      provider: 'anthropic',
-      model: 'claude-3-5-sonnet-20241022',
-      maxTokens: 200000,
-      temperature: 0.7
-    },
-    'gemini-1.5-pro': {
-      provider: 'google',
-      model: 'gemini-1.5-pro',
-      maxTokens: 1000000,
-      temperature: 0.7
-    },
-    'qwen2.5-72b': {
-      provider: 'qwen',
-      model: 'qwen2.5-72b',
+    'doubao-pro': {
+      provider: 'doubao',
+      model: 'ep-32b-chat',
       maxTokens: 32768,
+      temperature: 0.7
+    },
+    'hunyuan-pro': {
+      provider: 'hunyuan',
+      model: 'hunyuan-pro',
+      maxTokens: 32768,
+      temperature: 0.7
+    },
+    'deepseek-chat': {
+      provider: 'deepseek',
+      model: 'deepseek-chat',
+      maxTokens: 8192,
+      temperature: 0.7
+    },
+    // 'qwen2.5-72b': {
+    //   provider: 'qwen',
+    //   model: 'qwen2.5-72b',
+    //   maxTokens: 32768,
+    //   temperature: 0.7
+    // },
+    'qwen3-4b': {
+      provider: 'qwen',
+      model: 'qwen3-4b',
+      maxTokens: 8192,
       temperature: 0.7
     }
   };

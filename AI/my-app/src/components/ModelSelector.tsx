@@ -24,35 +24,35 @@ export const AI_MODELS: AIModel[] = [
     pricing: '$5/1M tokens'
   },
   {
-    id: 'gpt-4-turbo',
-    name: 'GPT-4 Turbo',
-    description: 'OpenAI高性能模型，适合复杂任务',
+    id: 'doubao-pro',
+    name: '豆包 Pro',
+    description: '字节跳动豆包大模型，通用对话与创作',
     icon: <Star className="w-4 h-4" />,
-    color: 'bg-blue-500',
-    maxTokens: 128000,
-    pricing: '$10/1M tokens'
+    color: 'bg-pink-600',
+    maxTokens: 32768,
+    pricing: '按量计费'
   },
   {
-    id: 'claude-3-5-sonnet',
-    name: 'Claude 3.5 Sonnet',
-    description: 'Anthropic最新模型，推理能力强',
+    id: 'hunyuan-pro',
+    name: '腾讯混元 Pro',
+    description: '腾讯混元大模型，中文与工具调用能力强',
     icon: <Brain className="w-4 h-4" />,
-    color: 'bg-orange-500',
-    maxTokens: 200000,
-    pricing: '$3/1M tokens'
+    color: 'bg-cyan-600',
+    maxTokens: 32768,
+    pricing: '按量计费'
   },
   {
-    id: 'gemini-1.5-pro',
-    name: 'Gemini 1.5 Pro',
-    description: 'Google多模态模型，支持长文本',
+    id: 'deepseek-chat',
+    name: 'DeepSeek Chat',
+    description: 'DeepSeek 对话/推理模型，性价比高',
     icon: <Zap className="w-4 h-4" />,
-    color: 'bg-green-500',
-    maxTokens: 1000000,
-    pricing: '$3.5/1M tokens'
+    color: 'bg-gray-700',
+    maxTokens: 32768,
+    pricing: '按量计费'
   },
   {
-    id: 'qwen2.5-72b',
-    name: 'Qwen2.5-72B',
+    id: 'qwen3-4b',
+    name: '千问3-4B',
     description: '阿里云开源模型，中文能力强',
     icon: <Sparkles className="w-4 h-4" />,
     color: 'bg-red-500',

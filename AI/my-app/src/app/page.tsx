@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Loader2 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { callAIAPI, callAIStreamAPI, ChatMessage } from '@/lib/api';
 import MessageActions from '@/components/MessageActions';
 import Sidebar from '@/components/Sidebar';
@@ -21,6 +23,7 @@ export default function Home() {
   const [currentConversationId, setCurrentConversationId] = useState('conv_1');
   const [selectedModel, setSelectedModel] = useState('gpt-4o');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   // 模拟会话数据
   const [conversations] = useState([
@@ -39,6 +42,10 @@ export default function Home() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -91,8 +98,71 @@ export default function Home() {
   };
 
   const handleRegenerate = async (messageId: string) => {
-    // TODO: 实现重新生成功能
-    console.log('重新生成消息:', messageId);
+    if (isLoading) return;
+
+    // 找到要重新生成的助手消息索引
+    const targetIndex = messages.findIndex(m => m.id === messageId && m.role === 'assistant');
+    if (targetIndex === -1) return;
+
+    // 找到与该助手消息配对的那条用户消息（就近向前找到第一条用户消息）
+    const pairedUser = (() => {
+      for (let i = targetIndex - 1; i >= 0; i--) {
+        if (messages[i].role === 'user') return messages[i];
+      }
+      return undefined;
+    })();
+    if (!pairedUser) return;
+
+    setIsLoading(true);
+    try {
+      const response = await callAIAPI({
+        message: pairedUser.content,
+        model: selectedModel
+      });
+
+      setMessages(prev => prev.map(m => (
+        m.id === messageId
+          ? { ...m, content: response.message, timestamp: new Date(), replyToId: pairedUser.id }
+          : m
+      )));
+    } catch (error) {
+      console.error('重新生成失败:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRegenerateByIndex = async (messageIndex: number) => {
+    if (isLoading) return;
+    if (messageIndex < 0 || messageIndex >= messages.length) return;
+    const target = messages[messageIndex];
+    if (!target || target.role !== 'assistant') return;
+
+    const pairedUser = (() => {
+      for (let i = messageIndex - 1; i >= 0; i--) {
+        if (messages[i].role === 'user') return messages[i];
+      }
+      return undefined;
+    })();
+    if (!pairedUser) return;
+
+    setIsLoading(true);
+    try {
+      const response = await callAIAPI({
+        message: pairedUser.content,
+        model: selectedModel
+      });
+
+      setMessages(prev => prev.map((m, i) => (
+        i === messageIndex
+          ? { ...m, content: response.message, timestamp: new Date(), replyToId: pairedUser.id }
+          : m
+      )));
+    } catch (error) {
+      console.error('重新生成失败:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleFeedback = (messageId: string, type: 'positive' | 'negative') => {
@@ -147,7 +217,7 @@ export default function Home() {
 
         {/* Messages Container */}
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-          {messages.map((message) => (
+          {messages.map((message, index) => (
             <div
               key={message.id}
               className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -166,18 +236,54 @@ export default function Home() {
                     </div>
                   )}
                   <div className="flex-1">
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    <div className="text-sm prose prose-sm max-w-none">
+                      <ReactMarkdown 
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          code({ node, inline, className, children, ...props }: any) {
+                            const match = /language-(\w+)/.exec(className || '');
+                            return !inline && match ? (
+                              <pre className="bg-gray-100 rounded-md p-3 overflow-x-auto">
+                                <code className={className} {...props}>
+                                  {children}
+                                </code>
+                              </pre>
+                            ) : (
+                              <code className="bg-gray-100 px-1 py-0.5 rounded text-sm" {...props}>
+                                {children}
+                              </code>
+                            );
+                          },
+                          p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                          ul: ({ children }) => <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>,
+                          ol: ({ children }) => <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>,
+                          li: ({ children }) => <li className="text-sm">{children}</li>,
+                          blockquote: ({ children }) => (
+                            <blockquote className="border-l-4 border-gray-300 pl-4 italic text-gray-600 mb-2">
+                              {children}
+                            </blockquote>
+                          ),
+                          h1: ({ children }) => <h1 className="text-lg font-bold mb-2">{children}</h1>,
+                          h2: ({ children }) => <h2 className="text-base font-bold mb-2">{children}</h2>,
+                          h3: ({ children }) => <h3 className="text-sm font-bold mb-2">{children}</h3>,
+                          strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                          em: ({ children }) => <em className="italic">{children}</em>,
+                        }}
+                      >
+                        {message.content}
+                      </ReactMarkdown>
+                    </div>
                     <p className={`text-xs mt-2 ${
                       message.role === 'user' ? 'text-blue-100' : 'text-gray-500'
                     }`}>
-                      {message.timestamp.toLocaleTimeString()}
+                      {isHydrated ? message.timestamp.toLocaleTimeString() : ''}
                     </p>
                     
                     {message.role === 'assistant' && (
                       <MessageActions
                         messageId={message.id}
                         content={message.content}
-                        onRegenerate={() => handleRegenerate(message.id)}
+                        onRegenerate={() => handleRegenerateByIndex(index)}
                         onFeedback={(type) => handleFeedback(message.id, type)}
                       />
                     )}

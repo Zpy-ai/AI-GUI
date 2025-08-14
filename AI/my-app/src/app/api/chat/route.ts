@@ -76,21 +76,225 @@ class GoogleProvider implements AIProvider {
   }
 }
 
+// Doubao 提供者（OpenAI 兼容接口）
+class DoubaoProvider implements AIProvider {
+  async generateResponse(request: ChatRequest): Promise<ChatResponse> {
+    const apiKey = process.env.DOUBAO_API_KEY;
+    const endpointBase = process.env.DOUBAO_API_ENDPOINT;
+
+    if (!apiKey) {
+      throw new Error('缺少 DOUBAO_API_KEY 环境变量');
+    }
+    if (!endpointBase) {
+      throw new Error('缺少 DOUBAO_API_ENDPOINT 环境变量');
+    }
+
+    const url = `${endpointBase.replace(/\/$/, '')}/chat/completions`;
+    const model = process.env.DOUBAO_MODEL_ID || request.model || 'ep-32b-chat';
+
+    const maxTokensRaw = request.maxTokens;
+    const effectiveMaxTokens = Math.max(1, Math.min(8192, typeof maxTokensRaw === 'number' ? maxTokensRaw : 8192));
+
+    const payload = {
+      model,
+      messages: [
+        { role: 'user', content: request.message }
+      ],
+      max_tokens: effectiveMaxTokens,
+      temperature: request.temperature,
+    } as Record<string, unknown>;
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Doubao API 请求失败: ${res.status} ${res.statusText} - ${errText}`);
+    }
+
+    const data = await res.json() as any;
+    const content = data?.choices?.[0]?.message?.content ?? '';
+
+    return {
+      message: content,
+      conversationId: request.conversationId || `conv_${Date.now()}`,
+      model,
+      usage: data?.usage ?? undefined,
+    };
+  }
+}
+
+// Hunyuan 提供者（OpenAI 兼容接口）
+class HunyuanProvider implements AIProvider {
+  async generateResponse(request: ChatRequest): Promise<ChatResponse> {
+    const apiKey = process.env.HUNYUAN_API_KEY;
+    const endpointBase = process.env.HUNYUAN_API_ENDPOINT;
+
+    if (!apiKey) {
+      throw new Error('缺少 HUNYUAN_API_KEY 环境变量');
+    }
+    if (!endpointBase) {
+      throw new Error('缺少 HUNYUAN_API_ENDPOINT 环境变量');
+    }
+
+    const url = `${endpointBase.replace(/\/$/, '')}/chat/completions`;
+    const model = process.env.HUNYUAN_MODEL_ID || request.model || 'hunyuan-pro';
+
+    const payload = {
+      model,
+      messages: [
+        { role: 'user', content: request.message }
+      ],
+      max_tokens: request.maxTokens,
+      temperature: request.temperature,
+    } as Record<string, unknown>;
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Hunyuan API 请求失败: ${res.status} ${res.statusText} - ${errText}`);
+    }
+
+    const data = await res.json() as any;
+    const content = data?.choices?.[0]?.message?.content ?? '';
+
+    return {
+      message: content,
+      conversationId: request.conversationId || `conv_${Date.now()}`,
+      model,
+      usage: data?.usage ?? undefined,
+    };
+  }
+}
+
+// DeepSeek 提供者（OpenAI 兼容接口）
+class DeepseekProvider implements AIProvider {
+  async generateResponse(request: ChatRequest): Promise<ChatResponse> {
+    const apiKey = process.env.DEEPSEEK_API_KEY;
+    const endpointBase = process.env.DEEPSEEK_API_ENDPOINT || 'https://api.deepseek.com/v1';
+
+    if (!apiKey) {
+      throw new Error('缺少 DEEPSEEK_API_KEY 环境变量');
+    }
+
+    const url = `${endpointBase.replace(/\/$/, '')}/chat/completions`;
+    const model = process.env.DEEPSEEK_MODEL_ID || request.model || 'deepseek-chat';
+
+    const payload = {
+      model,
+      messages: [
+        { role: 'user', content: request.message }
+      ],
+      max_tokens: request.maxTokens,
+      temperature: request.temperature,
+    } as Record<string, unknown>;
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Deepseek API 请求失败: ${res.status} ${res.statusText} - ${errText}`);
+    }
+
+    const data = await res.json() as any;
+    const content = data?.choices?.[0]?.message?.content ?? '';
+
+    return {
+      message: content,
+      conversationId: request.conversationId || `conv_${Date.now()}`,
+      model,
+      usage: data?.usage ?? undefined,
+    };
+  }
+}
+
 // Qwen提供者
 class QwenProvider implements AIProvider {
   async generateResponse(request: ChatRequest): Promise<ChatResponse> {
-    // TODO: 集成Qwen API
-    // 可以通过阿里云或其他Qwen API服务商
-    
-    return {
-      message: `[Qwen ${request.model}] ${request.message}的回复`,
-      conversationId: request.conversationId || `conv_${Date.now()}`,
-      model: request.model,
-      usage: {
-        prompt_tokens: request.message.length,
-        completion_tokens: 50,
-        total_tokens: request.message.length + 50,
+    const apiKey = process.env.QWEN_API_KEY;
+    const endpointBase = process.env.QWEN_API_ENDPOINT || 'https://api.qwen.ai/v1';
+
+    if (!apiKey) {
+      throw new Error('缺少 QWEN_API_KEY 环境变量');
+    }
+
+    // OpenAI 兼容模式接口: POST /chat/completions
+    const url = `${endpointBase.replace(/\/$/, '')}/chat/completions`;
+
+    // 某些平台可能模型名不同，如需要可在此映射
+    const envModel = process.env.QWEN_MODEL_ID;
+
+    const normalizeQwenModelId = (
+      inputModelId: string | undefined,
+      endpoint: string
+    ): string | undefined => {
+      if (!inputModelId) return undefined;
+      const id = inputModelId.toLowerCase();
+      // 前端展示模型到服务商真实模型的最小映射
+      if (id === 'qwen2.5-72b' || id === 'qwen3-4b') {
+        if (endpoint.includes('dashscope.aliyuncs.com')) return 'qwen-plus';
+        if (endpoint.includes('siliconflow')) return 'Qwen/Qwen2.5-72B-Instruct';
+        return 'qwen2.5-72b-instruct';
       }
+      return inputModelId;
+    };
+
+    const mappedRequestModel = normalizeQwenModelId(request.model, endpointBase);
+    const model = envModel || mappedRequestModel || process.env.DEFAULT_MODEL || 'qwen-plus';
+
+    const payload = {
+      model,
+      messages: [
+        { role: 'user', content: request.message }
+      ],
+      max_tokens: request.maxTokens,
+      temperature: request.temperature,
+    } as Record<string, unknown>;
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // Qwen OpenAI 兼容接口使用 Bearer 鉴权
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Qwen API 请求失败: ${res.status} ${res.statusText} - ${errText}`);
+    }
+
+    const data = await res.json() as any;
+    const content = data?.choices?.[0]?.message?.content ?? '';
+
+    return {
+      message: content,
+      conversationId: request.conversationId || `conv_${Date.now()}`,
+      model,
+      usage: data?.usage ?? undefined,
     };
   }
 }
@@ -106,6 +310,12 @@ const getProvider = (provider: string): AIProvider => {
       return new GoogleProvider();
     case 'qwen':
       return new QwenProvider();
+    case 'doubao':
+      return new DoubaoProvider();
+    case 'hunyuan':
+      return new HunyuanProvider();
+    case 'deepseek':
+      return new DeepseekProvider();
     default:
       return new OpenAIProvider();
   }
@@ -113,16 +323,18 @@ const getProvider = (provider: string): AIProvider => {
 
 export async function POST(request: NextRequest) {
   try {
-    const body: ChatRequest & { provider: string } = await request.json();
-    
-    const provider = getProvider(body.provider);
+    const body: ChatRequest & { provider?: string } = await request.json();
+    const providerKey = body.provider || 'openai';
+
+    const provider = getProvider(providerKey);
     const response = await provider.generateResponse(body);
 
     return NextResponse.json(response);
   } catch (error) {
     console.error('AI API错误:', error);
+    const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { error: '处理请求时发生错误' },
+      { error: message },
       { status: 500 }
     );
   }

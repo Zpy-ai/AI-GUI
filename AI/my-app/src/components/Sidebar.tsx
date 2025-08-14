@@ -1,7 +1,7 @@
 'use client';
 
 import { Plus, Settings, MessageSquare, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Conversation {
   id: string;
@@ -26,6 +26,11 @@ export default function Sidebar({
   onDeleteConversation
 }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(true);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   return (
     <div className={`bg-white border-r border-gray-200 flex flex-col ${isOpen ? 'w-64' : 'w-16'} transition-all duration-300`}>
@@ -74,7 +79,7 @@ export default function Sidebar({
                   {conversation.lastMessage}
                 </p>
                 <p className="text-xs text-gray-400 mt-1">
-                  {conversation.timestamp.toLocaleDateString()}
+                  {isHydrated ? conversation.timestamp.toLocaleDateString() : ''}
                 </p>
               </div>
               

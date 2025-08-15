@@ -13,6 +13,7 @@ export interface ChatRequest {
   model: string;
   maxTokens?: number;
   temperature?: number;
+  provider?: string;
 }
 
 export interface ChatResponse {
@@ -101,15 +102,27 @@ export const callAIStreamAPI = async (
   request: ChatRequest,
   onChunk: (chunk: string) => void,
   onComplete: (response: ChatResponse) => void,
-  onError: (error: Error) => void
+  onError: (error: Error) => void,
+  abortController?: AbortController
 ) => {
   try {
+    const modelConfig = getModelConfig(request.model);
+    
+    const apiRequest = {
+      ...request,
+      ...modelConfig,
+      maxTokens: request.maxTokens || modelConfig.maxTokens,
+      temperature: request.temperature || modelConfig.temperature,
+      provider: request.provider || modelConfig.provider
+    };
+
     const response = await fetch('/api/chat/stream', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(request),
+      body: JSON.stringify(apiRequest),
+      signal: abortController?.signal,
     });
 
     if (!response.ok) {
@@ -121,21 +134,50 @@ export const callAIStreamAPI = async (
       throw new Error('无法读取响应流');
     }
 
-    let fullResponse = '';
+    let fullResponse: ChatResponse | null = null;
     
-    while (true) {
-      const { done, value } = await reader.read();
-      
-      if (done) break;
-      
-      const chunk = new TextDecoder().decode(value);
-      fullResponse += chunk;
-      onChunk(chunk);
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) break;
+        
+        const chunk = new TextDecoder().decode(value);
+        const lines = chunk.split('\n');
+        
+        for (const line of lines) {
+          if (line.trim()) {
+            try {
+              const data = JSON.parse(line);
+              
+              if (data.chunk) {
+                onChunk(data.chunk);
+              }
+              
+              if (data.done && data.response) {
+                fullResponse = data.response;
+                onComplete(data.response);
+                return;
+              }
+            } catch (e) {
+              // 忽略解析错误
+            }
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
     }
-
-    // 解析完整响应
-    const parsedResponse: ChatResponse = JSON.parse(fullResponse);
-    onComplete(parsedResponse);
+    
+    // 如果没有收到完整响应，创建一个默认响应
+    if (!fullResponse) {
+      const defaultResponse: ChatResponse = {
+        message: '',
+        conversationId: request.conversationId || `conv_${Date.now()}`,
+        model: request.model,
+      };
+      onComplete(defaultResponse);
+    }
     
   } catch (error) {
     onError(error as Error);

@@ -1,20 +1,24 @@
 'use client';
 
-import { Copy, RefreshCw, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Copy, RefreshCw, ThumbsUp, ThumbsDown, Square } from 'lucide-react';
 import { useState } from 'react';
 
 interface MessageActionsProps {
   messageId: string;
   content: string;
   onRegenerate?: () => void;
+  onStopRegenerate?: () => void;
   onFeedback?: (type: 'positive' | 'negative') => void;
+  isRegenerating?: boolean;
 }
 
 export default function MessageActions({ 
   messageId, 
   content, 
   onRegenerate, 
-  onFeedback 
+  onStopRegenerate,
+  onFeedback,
+  isRegenerating = false
 }: MessageActionsProps) {
   const [copied, setCopied] = useState(false);
 
@@ -42,13 +46,23 @@ export default function MessageActions({
         )}
       </button>
       
-      {onRegenerate && (
+      {onRegenerate && !isRegenerating && (
         <button
           onClick={onRegenerate}
           className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
           title="重新生成"
         >
           <RefreshCw className="w-3 h-3" />
+        </button>
+      )}
+
+      {onStopRegenerate && isRegenerating && (
+        <button
+          onClick={onStopRegenerate}
+          className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
+          title="停止重新生成"
+        >
+          <Square className="w-3 h-3" />
         </button>
       )}
       

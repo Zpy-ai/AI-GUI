@@ -11,11 +11,12 @@
 - **DeepSeek Chat** - DeepSeek 对话/推理模型，性价比高
 - **千问3-4B** - 阿里云开源模型，中文能力强
 
-### 🎨 界面功能
+### �� 界面功能
 - 现代化聊天界面设计
-- 实时消息发送和接收
+- **🚀 流式输出** - 实时显示AI回复，提供打字机效果
+- **⏹️ 终止生成** - 支持随时终止AI回答和重新生成
 - 多模型选择器
-- 消息操作按钮（复制、重新生成、反馈）
+- 消息操作按钮（复制、重新生成、反馈、终止）
 - 侧边栏会话管理
 - 响应式设计，支持移动端
 - 加载状态和错误处理
@@ -89,15 +90,45 @@ npm run dev
 - **模型映射**：修复前端模型名与服务商真实模型名不匹配的问题
 
 #### ✨ 功能增强
+- **🚀 流式输出**：实现真正的流式输出，AI回复逐字显示，提供更好的用户体验
+- **⏹️ 终止生成**：支持随时终止AI回答和重新生成过程
 - **错误处理**：后端返回详细的错误信息，便于调试和问题定位
 - **模型自动映射**：支持不同服务商的模型名自动映射（如 qwen2.5-72b → qwen-plus）
 - **Markdown 支持**：完整的 Markdown 渲染，支持代码高亮、列表、引用等
 - **多服务商兼容**：统一的 OpenAI 兼容接口，支持多个国内AI服务商
 
 #### 🔧 技术优化
+- **代码重构**：将AI提供者代码分离到独立文件，提高可维护性
+- **模块化设计**：每个AI模型有独立的提供者文件
 - **环境变量配置**：支持每个服务商的独立配置（API密钥、端点、模型名）
 - **响应式设计**：优化移动端显示和交互体验
 - **状态管理**：改进消息状态管理和重新生成逻辑
+
+### 流式输出功能
+
+#### 后端实现
+- **API路由**: `/api/chat/stream` 处理流式请求
+- **ReadableStream**: 使用Web标准的ReadableStream API
+- **分块传输**: 将AI响应分块发送给前端
+- **实时更新**: 前端实时接收并显示每个文本块
+
+#### 前端实现
+- **流式接收**: 使用 `fetch` API的 `ReadableStream` 功能
+- **实时渲染**: 通过React状态管理实时更新消息内容
+- **用户体验**: 提供打字机效果，让用户看到AI正在"思考"
+
+### 终止生成功能
+
+#### 功能特点
+- **随时终止**: 在AI回答过程中可以随时点击终止按钮
+- **视觉反馈**: 终止后会在消息末尾显示"[回答已终止]"标记
+- **状态管理**: 正确处理终止状态，避免界面卡死
+- **重新生成**: 支持终止重新生成过程
+
+#### 使用方法
+1. **发送消息时**: 在AI回答过程中，输入框旁的发送按钮会变成红色的终止按钮
+2. **重新生成时**: 在消息操作区域会显示终止按钮
+3. **点击终止**: 点击终止按钮即可立即停止AI回答
 
 ### API密钥获取
 
@@ -152,17 +183,24 @@ src/
 ├── app/
 │   ├── api/
 │   │   └── chat/
-│   │       ├── route.ts          # 聊天API路由
+│   │       ├── route.ts          # 普通聊天API路由
 │   │       └── stream/
 │   │           └── route.ts      # 流式聊天API路由
 │   ├── layout.tsx
 │   └── page.tsx                  # 主页面
 ├── components/
 │   ├── ModelSelector.tsx         # 模型选择器
-│   ├── MessageActions.tsx        # 消息操作按钮
+│   ├── MessageActions.tsx        # 消息操作按钮（包含终止功能）
 │   └── Sidebar.tsx               # 侧边栏
 └── lib/
-    └── api.ts                    # API服务
+    ├── api.ts                    # API服务（支持流式和终止）
+    └── providers/                # AI提供者模块
+        ├── index.ts              # 提供者接口定义和工厂函数
+        ├── openai.ts             # OpenAI流式提供者
+        ├── doubao.ts             # 豆包流式提供者
+        ├── hunyuan.ts            # 混元流式提供者
+        ├── deepseek.ts           # DeepSeek流式提供者
+        └── qwen.ts               # 千问流式提供者
 ```
 
 ## 🔌 API集成
@@ -179,30 +217,22 @@ src/
 
 ### 启用真实AI服务
 
-对于尚未集成的服务，在 `src/app/api/chat/route.ts` 中取消注释相应的SDK导入并配置API密钥。
+对于尚未集成的服务，在对应的提供者文件中取消注释相应的SDK导入并配置API密钥。
 
 示例（OpenAI）：
 ```typescript
+// 在 src/lib/providers/openai.ts 中
 import OpenAI from 'openai';
 
-class OpenAIProvider implements AIProvider {
-  async generateResponse(request: ChatRequest): Promise<ChatResponse> {
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const completion = await openai.chat.completions.create({
-      model: request.model,
-      messages: [{ role: 'user', content: request.message }],
-      max_tokens: request.maxTokens,
-      temperature: request.temperature
-    });
-    
-    return {
-      message: completion.choices[0].message.content || '',
-      conversationId: request.conversationId || `conv_${Date.now()}`,
-      model: request.model,
-      usage: completion.usage
-    };
-  }
-}
+// 取消注释并配置真实API调用
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const stream = await openai.chat.completions.create({
+  model: request.model,
+  messages: [{ role: 'user', content: request.message }],
+  max_tokens: request.maxTokens,
+  temperature: request.temperature,
+  stream: true
+});
 ```
 
 ## 🎯 使用说明
@@ -211,14 +241,21 @@ class OpenAIProvider implements AIProvider {
 1. 在右上角选择想要使用的AI模型
 2. 在输入框中输入问题
 3. 点击发送按钮或按Enter键发送消息
-4. 等待AI回复
+4. 观察AI回复的流式输出效果
 
 ### 高级功能
 - **复制消息**: 点击消息下方的复制按钮
 - **重新生成**: 点击重新生成按钮获取新的回复（基于对应的用户消息）
+- **⏹️ 终止生成**: 在AI回答过程中点击终止按钮停止生成
 - **反馈**: 对AI回复进行好评或差评
 - **会话管理**: 在侧边栏创建新对话或切换对话
 - **Markdown 渲染**: AI回复支持代码高亮、列表、引用等格式
+
+### 流式输出体验
+- AI回复会逐字显示，提供打字机效果
+- 用户可以看到AI正在"思考"和"回复"
+- 响应速度更快，无需等待完整回复
+- 支持随时终止生成过程
 
 ## 🛠️ 技术栈
 
@@ -229,6 +266,8 @@ class OpenAIProvider implements AIProvider {
 - **状态管理**: React Hooks
 - **API**: Next.js API Routes
 - **Markdown**: React Markdown + Remark GFM
+- **流式处理**: Web Streams API
+- **终止控制**: AbortController API
 
 ## 📝 开发计划
 
@@ -246,6 +285,9 @@ class OpenAIProvider implements AIProvider {
 - [x] 消息配对重新生成（基于对应用户消息）
 - [x] 响应式时间显示（客户端渲染）
 - [x] 多服务商兼容端点支持
+- [x] **🚀 流式输出功能**
+- [x] **⏹️ 终止生成功能**
+- [x] **🔧 代码重构和模块化**
 
 ### 即将添加的功能
 - [ ] 文件上传支持
@@ -255,6 +297,8 @@ class OpenAIProvider implements AIProvider {
 - [ ] 用户认证
 - [ ] 多语言支持
 - [ ] 流式响应优化
+- [ ] 对话历史持久化
+- [ ] 多轮对话上下文管理
 
 ## 🤝 贡献
 
@@ -267,3 +311,4 @@ MIT License
 ## 📞 支持
 
 如有问题，请提交Issue或联系开发者。
+

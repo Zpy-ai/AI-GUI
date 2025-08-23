@@ -24,6 +24,7 @@ export class OpenAIStreamProvider implements AIStreamProvider {
             message: `[OpenAI ${request.model}] ${request.message}的流式回复`,
             conversationId: request.conversationId || `conv_${Date.now()}`,
             model: request.model,
+            provider: request.provider || 'openai',
             usage: {
               prompt_tokens: request.message.length,
               completion_tokens: 50,

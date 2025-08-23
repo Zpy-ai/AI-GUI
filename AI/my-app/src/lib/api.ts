@@ -20,6 +20,7 @@ export interface ChatResponse {
   message: string;
   conversationId: string;
   model: string;
+  provider?: string;
   usage?: {
     prompt_tokens: number;
     completion_tokens: number;
@@ -182,4 +183,4 @@ export const callAIStreamAPI = async (
   } catch (error) {
     onError(error as Error);
   }
-}; 
+};

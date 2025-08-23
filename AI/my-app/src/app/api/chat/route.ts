@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ChatRequest, ChatResponse } from '@/lib/api';
+import { logChatInteraction } from '@/lib/chatService';
 
 // AI服务提供者接口
 interface AIProvider {
@@ -329,6 +330,17 @@ export async function POST(request: NextRequest) {
     const provider = getProvider(providerKey);
     const response = await provider.generateResponse(body);
 
+    // 记录聊天交互到数据库
+    try {
+      await logChatInteraction(body, {
+        ...response,
+        provider: body.provider || 'openai'
+      });
+    } catch (dbError) {
+      console.error('数据库记录错误:', dbError);
+      // 不中断主流程，仅记录错误
+    }
+
     return NextResponse.json(response);
   } catch (error) {
     console.error('AI API错误:', error);
@@ -338,4 +350,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}

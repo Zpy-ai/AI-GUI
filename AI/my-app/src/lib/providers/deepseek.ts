@@ -69,6 +69,7 @@ export class DeepseekStreamProvider implements AIStreamProvider {
                       message: fullContent,
                       conversationId: request.conversationId || `conv_${Date.now()}`,
                       model,
+                      provider: request.provider || 'deepseek',
                       usage
                     };
                     

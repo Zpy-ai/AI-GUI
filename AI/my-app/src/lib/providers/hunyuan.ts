@@ -72,6 +72,7 @@ export class HunyuanStreamProvider implements AIStreamProvider {
                       message: fullContent,
                       conversationId: request.conversationId || `conv_${Date.now()}`,
                       model,
+                      provider: request.provider || 'hunyuan',
                       usage
                     };
                     

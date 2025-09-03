@@ -107,6 +107,11 @@ DEEPSEEK_API_KEY=your_deepseek_api_key_here
 DEEPSEEK_API_ENDPOINT=https://api.deepseek.com/v1
 DEEPSEEK_MODEL_ID=deepseek-chat
 
+# Kimi (月之暗面) OpenAI 兼容接口
+KIMI_API_KEY=your_kimi_api_key_here
+KIMI_API_ENDPOINT=https://api.moonshot.cn/v1
+KIMI_MODEL_ID=kimi-k2
+
 # ========== 数据库配置 ==========
 DB_HOST=localhost
 DB_USER=root
@@ -166,6 +171,7 @@ npm run db:status
 
 支持多种主流AI模型，需要在环境变量中配置对应的API密钥：
 
+- 🌙 **Kimi** - `KIMI_API_KEY` (Kimi K2)
 - 🎯 **OpenAI** - `OPENAI_API_KEY` (GPT-4o, GPT-3.5-turbo)
 - 🚀 **豆包** - `DOUBAIN_API_KEY`, `DOUBAIN_APP_ID` (豆包Pro)
 - 🦁 **混元** - `HUNYUAN_API_KEY`, `HUNYUAN_APP_ID` (混元Pro)
@@ -208,11 +214,11 @@ npm run db:status
 
 ### API密钥获取
 
-1. **OpenAI API**
-   - 访问 [OpenAI Platform](https://platform.openai.com/)
+1. **Kimi API (Moonshot AI)"
+   - 访问 [Moonshot AI 开放平台](https://platform.moonshot.cn/)
    - 注册账号并获取API密钥
 
-2. **Qwen API (阿里云百炼)**
+2. **Qwen API (阿里云百炼)"
    - 访问 [阿里云百炼控制台](https://bailian.console.aliyun.com/)
    - 获取API密钥和兼容端点
 
@@ -235,20 +241,14 @@ npm run db:status
 ```typescript
 export const AI_MODELS: AIModel[] = [
   {
-    id: 'gpt-4o',
-    name: 'GPT-4o',
-    description: 'OpenAI最新多模态模型，支持图像和文本',
+    id: 'kimi-k2',
+    name: 'Kimi K2',
+    description: 'Moonshot Kimi大模型，支持长文本和复杂推理',
+    icon: <Crown className="w-4 h-4" />,
+    color: 'bg-purple-500',
     maxTokens: 128000,
-    pricing: '$5/1M tokens'
-  },
-  {
-    id: 'doubao-pro',
-    name: '豆包 Pro',
-    description: '字节跳动豆包大模型，通用对话与创作',
-    maxTokens: 32768,
     pricing: '按量计费'
-  },
-  // ... 其他模型
+  }
 ];
 ```
 
@@ -290,11 +290,12 @@ export const AI_MODELS: AIModel[] = [
 
 项目已集成以下AI服务的真实API调用：
 
-1. **Qwen (千问)** - 支持阿里云百炼兼容模式
-2. **Doubao (豆包)** - OpenAI兼容接口
-3. **Hunyuan (混元)** - OpenAI兼容接口  
-4. **DeepSeek** - 官方API接口
-5. **OpenAI** - 模拟响应（需手动集成）
+1. **Kimi (月之暗面)** - Moonshot AI官方API接口
+2. **Qwen (千问)** - 支持阿里云百炼兼容模式
+3. **Doubao (豆包)** - OpenAI兼容接口
+4. **Hunyuan (混元)** - OpenAI兼容接口  
+5. **DeepSeek** - 官方API接口
+6. **OpenAI** - 模拟响应（需手动集成）
 
 ### 启用真实AI服务
 
@@ -425,6 +426,7 @@ const stream = await openai.chat.completions.create({
 - ⚡ **[Next.js](https://nextjs.org/)** - 全栈 React 框架
 - ⚛️ **[React](https://reactjs.org/)** - 声明式 UI 库
 - 🎨 **[Tailwind CSS](https://tailwindcss.com/)** - 实用优先的 CSS 框架
+- 🌙 **[月之暗面](https://www.moonshot.cn/)** - Kimi 大模型
 - 🤖 **[OpenAI](https://openai.com/)** - GPT 系列模型
 - 🚀 **[字节跳动](https://www.bytedance.com/)** - 豆包大模型
 - 🦁 **[腾讯](https://www.tencent.com/)** - 混元大模型

@@ -50,11 +50,11 @@ interface ChatResponse {
 ## 支持的AI模型
 
 ### 已集成的模型：
-1. **GPT-4o (OpenAI)**
-   - 最新多模态模型，支持图像和文本
+1. **Kimi K2 (月之暗面)**
+   - 超大规模语言模型，支持超长文本和复杂推理
    - 最大长度: 128,000 tokens
-   - 定价: $5/1M tokens
-   - 文档: https://platform.openai.com/docs
+   - 定价: 按量计费
+   - 文档: https://platform.moonshot.cn/
 
 2. **GPT-4 Turbo (OpenAI)**
    - 高性能模型，适合复杂任务
@@ -112,7 +112,7 @@ QWEN_API_KEY=your_qwen_api_key_here
 QWEN_API_ENDPOINT=https://api.qwen.ai/v1
 
 # 默认配置
-DEFAULT_MODEL=gpt-4o
+DEFAULT_MODEL=kimi-k2
 MAX_TOKENS=1000
 TEMPERATURE=0.7
 ```
@@ -180,4 +180,4 @@ npm run dev
 2. 实现适当的请求频率限制
 3. 添加用户认证和授权
 4. 考虑数据隐私和合规性
-5. 监控API使用量和成本 
+5. 监控API使用量和成本

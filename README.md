@@ -9,7 +9,7 @@
 
 ## 🎯 项目特色
 
-- 🌟 **多模型支持** - 集成 OpenAI、豆包、混元、DeepSeek、千问等主流AI模型
+- 🌟 **多模型支持** - 集成 Kimi、豆包、混元、DeepSeek、千问等主流AI模型
 - 💾 **数据持久化** - 完整的 MySQL 数据库集成，自动保存所有聊天记录
 - 🚀 **流式输出** - 实时显示AI回复，提供流畅的打字机效果
 - ⏹️ **终止生成** - 支持随时终止AI回答和重新生成
@@ -20,7 +20,7 @@
 
 ### 🤖 多模型支持
 
-- 🎯 **GPT-4o** - OpenAI 最新旗舰模型，强大的多模态能力
+- 🌙 **Kimi K2** - 月之暗面最新大模型，支持超长文本和复杂推理
 - 🚀 **豆包 Pro** - 字节跳动最新大模型，优秀的中文理解
 - 🦁 **腾讯混元 Pro** - 腾讯自研大模型，强大的知识推理能力
 - 🔍 **DeepSeek Chat** - 深度求索开源模型，优秀的代码能力
@@ -172,7 +172,7 @@ npm run db:status
 支持多种主流AI模型，需要在环境变量中配置对应的API密钥：
 
 - 🌙 **Kimi** - `KIMI_API_KEY` (Kimi K2)
-- 🎯 **OpenAI** - `OPENAI_API_KEY` (GPT-4o, GPT-3.5-turbo)
+- 🎯 **OpenAI** - `OPENAI_API_KEY` (GPT-3.5-turbo)
 - 🚀 **豆包** - `DOUBAIN_API_KEY`, `DOUBAIN_APP_ID` (豆包Pro)
 - 🦁 **混元** - `HUNYUAN_API_KEY`, `HUNYUAN_APP_ID` (混元Pro)
 - 🔍 **DeepSeek** - `DEEPSEEK_API_KEY` (DeepSeek Chat)

@@ -232,7 +232,7 @@ export const logChatInteraction = async (
   if (!conversationId) {
     const conversation = await createConversation(
       request.model,
-      request.provider || 'openai'
+      request.provider || 'kimi'
     );
     conversationId = conversation.id;
     
@@ -253,7 +253,7 @@ export const logChatInteraction = async (
     conversationId,
     response.message,
     response.model,
-    request.provider || 'openai',
+    request.provider || 'kimi',
     response.usage
   );
 

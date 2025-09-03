@@ -7,30 +7,7 @@ interface AIProvider {
   generateResponse(request: ChatRequest): Promise<ChatResponse>;
 }
 
-// OpenAI提供者
-class OpenAIProvider implements AIProvider {
-  async generateResponse(request: ChatRequest): Promise<ChatResponse> {
-    // TODO: 集成OpenAI API
-    // const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    // const completion = await openai.chat.completions.create({
-    //   model: request.model,
-    //   messages: [{ role: 'user', content: request.message }],
-    //   max_tokens: request.maxTokens,
-    //   temperature: request.temperature
-    // });
-    
-    return {
-      message: `[OpenAI ${request.model}] ${request.message}的回复`,
-      conversationId: request.conversationId || `conv_${Date.now()}`,
-      model: request.model,
-      usage: {
-        prompt_tokens: request.message.length,
-        completion_tokens: 50,
-        total_tokens: request.message.length + 50,
-      }
-    };
-  }
-}
+
 
 // Anthropic提供者
 class AnthropicProvider implements AIProvider {
@@ -215,7 +192,55 @@ class DeepseekProvider implements AIProvider {
 
     if (!res.ok) {
       const errText = await res.text();
-      throw new Error(`Deepseek API 请求失败: ${res.status} ${res.statusText} - ${errText}`);
+      throw new Error(`Kimi API 请求失败: ${res.status} ${res.statusText} - ${errText}`);
+    }
+
+    const data = await res.json() as any;
+    const content = data?.choices?.[0]?.message?.content ?? '';
+
+    return {
+      message: content,
+      conversationId: request.conversationId || `conv_${Date.now()}`,
+      model,
+      usage: data?.usage ?? undefined,
+    };
+  }
+}
+
+// Kimi 提供者（OpenAI 兼容接口）
+class KimiProvider implements AIProvider {
+  async generateResponse(request: ChatRequest): Promise<ChatResponse> {
+    const apiKey = process.env.KIMI_API_KEY;
+    const endpointBase = process.env.KIMI_API_ENDPOINT || 'https://api.moonshot.cn/v1';
+
+    if (!apiKey) {
+      throw new Error('缺少 KIMI_API_KEY 环境变量');
+    }
+
+    const url = `${endpointBase.replace(/\/$/, '')}/chat/completions`;
+    const model = process.env.KIMI_MODEL_ID || request.model || 'kimi-k2-0711-preview';
+
+    const payload = {
+      model,
+      messages: [
+        { role: 'user', content: request.message }
+      ],
+      max_tokens: request.maxTokens,
+      temperature: request.temperature,
+    } as Record<string, unknown>;
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Kimi API 请求失败: ${res.status} ${res.statusText} - ${errText}`);
     }
 
     const data = await res.json() as any;
@@ -303,8 +328,6 @@ class QwenProvider implements AIProvider {
 // 提供者工厂
 const getProvider = (provider: string): AIProvider => {
   switch (provider) {
-    case 'openai':
-      return new OpenAIProvider();
     case 'anthropic':
       return new AnthropicProvider();
     case 'google':
@@ -317,15 +340,17 @@ const getProvider = (provider: string): AIProvider => {
       return new HunyuanProvider();
     case 'deepseek':
       return new DeepseekProvider();
+    case 'kimi':
+      return new KimiProvider();
     default:
-      return new OpenAIProvider();
+      return new KimiProvider();
   }
 };
 
 export async function POST(request: NextRequest) {
   try {
     const body: ChatRequest & { provider?: string } = await request.json();
-    const providerKey = body.provider || 'openai';
+    const providerKey = body.provider || 'kimi';
 
     const provider = getProvider(providerKey);
     const response = await provider.generateResponse(body);
@@ -334,7 +359,7 @@ export async function POST(request: NextRequest) {
     try {
       await logChatInteraction(body, {
         ...response,
-        provider: body.provider || 'openai'
+        provider: body.provider || 'kimi'
       });
     } catch (dbError) {
       console.error('数据库记录错误:', dbError);

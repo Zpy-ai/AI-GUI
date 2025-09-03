@@ -21,7 +21,7 @@ export default function Home() {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [currentConversationId, setCurrentConversationId] = useState('conv_1');
-  const [selectedModel, setSelectedModel] = useState('gpt-4o');
+  const [selectedModel, setSelectedModel] = useState('kimi-k2');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isHydrated, setIsHydrated] = useState(false);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
@@ -157,15 +157,15 @@ export default function Home() {
   // 根据模型ID获取对应的API配置
   const getModelConfig = (modelId: string) => {
     const configs = {
-      'gpt-4o': {
-        provider: 'openai',
-        model: 'gpt-4o',
+      'kimi-k2': {
+        provider: 'kimi',
+        model: 'kimi-k2-0711-preview',
         maxTokens: 128000,
         temperature: 0.7
       },
       'doubao-pro': {
         provider: 'doubao',
-        model: 'ep-32b-chat',
+        model: 'Doubao-Seed-1.6-vision',
         maxTokens: 32768,
         temperature: 0.7
       },
@@ -189,7 +189,7 @@ export default function Home() {
       }
     };
     
-    return configs[modelId as keyof typeof configs] || configs['gpt-4o'];
+    return configs[modelId as keyof typeof configs] || configs['kimi-k2'];
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

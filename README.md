@@ -7,6 +7,8 @@
 
 一个类似豆包的现代化AI聊天界面，支持多个不同的AI模型，具有美观的UI和丰富的功能，支持完整的数据库持久化。
 
+[interfaceI](https://github.com/Zpy-ai/AI-GUI/blob/main/images/interface.jpg)
+
 ## 🎯 项目特色
 
 - 🌟 **多模型支持** - 集成 Kimi、豆包、混元、DeepSeek、千问等主流AI模型
